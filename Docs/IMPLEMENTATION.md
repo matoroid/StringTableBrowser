@@ -242,7 +242,7 @@ Registering against `"TextProperty"` via `RegisterCustomPropertyTypeLayout` give
 **Final approach — `GetGlobalRowExtensionDelegate()` (Extension Bar)**
 The global row extension delegate fires for every rendered property row regardless of nesting depth, placement in a struct, or which class owns the property. It does not replace any existing widget — it appends to an extension bar that Unreal manages alongside the existing row. This is the only public API that provides both complete struct-depth coverage and full preservation of the native FText UI including the localization flag.
 
-The trade-off is that `ExtensionContent` is a shared slot — other plugins (e.g. MVVM) also register buttons there. The plugin inserts at index 0 to appear first, and both buttons coexist in the shared bar without conflict.
+The trade-off is that `ExtensionContent` is a shared slot — other plugins also register buttons there. The plugin inserts at index 0 to appear first, and both buttons coexist in the shared bar without conflict.
 
 **Why Next to Label is limited to top-level**
 The `IDetailCustomization` path (`RegisterCustomClassLayout("Object")`) cannot follow struct hierarchy without breaking the layout. It is intentionally limited to top-level category properties. Teams that need button coverage on struct-nested FText properties should use Extension Bar mode.
