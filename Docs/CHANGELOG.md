@@ -13,10 +13,6 @@ Features planned for future releases. See the [roadmap](#roadmap) section below
 for full descriptions and open questions.
 
 ### Planned — Added
-- **Force-load string table assets** — optional setting (on by default) to load
-  all string table assets through the asset stream manager on cache build,
-  preventing stale cache and missing entries on projects that do not keep assets
-  loaded in memory.
 - **CSV string table support** — detect and parse pure `.csv` string tables
   alongside `UStringTable` assets, making all localisation sources visible in
   the browser regardless of format.
@@ -63,8 +59,12 @@ Initial public release.
   panel via `FPropertyEditorModule::GetGlobalRowExtensionDelegate()`.
 - Two placement modes, configurable via Project Settings:
   - **Next to Property Label** *(default)* — always visible, inside name column.
+    Covers top-level `FText` properties only. Struct-nested FText properties
+    cannot be covered by this path without breaking the Details panel hierarchy.
   - **Extension Bar** — shared right-side bar; compatible with MVVM and other
-    plugins that also inject row buttons.
+    plugins that also inject row buttons. Covers ALL `FText` properties
+    including those nested inside structs at any depth, since the global row
+    extension delegate fires per-row regardless of nesting.
 - Applying an entry binds the `FText` property to a proper string table
   reference via `FText::FromStringTable()`, with full undo/redo support
   (`FScopedTransaction` + `UObject::Modify`).
@@ -89,6 +89,12 @@ Initial public release.
 - `UPackage::PackageSavedWithContextEvent` subscription — catches individual key
   edits made inside an open string table editor, which the Asset Registry does
   not report until re-scan.
+- **Force load on cache build** — when `bForceLoadStringTables` is enabled,
+  `FStreamableManager::RequestAsyncLoad` loads all string table assets in the
+  background before the cache enumeration pass runs. The editor remains
+  responsive during loading. The `ActiveStreamableHandle` is stored so
+  `ShutdownModule` can cancel the load if the module is destroyed mid-stream.
+  The toolbar button is labelled **Force Load String Table** to reflect this.
 - Debounced disk writes via `ScheduleDiskCacheSave()` — configurable delay
   (default 1.5s) prevents burst writes during version control syncs.
 - Thread-safe: all mutations guarded by `FCriticalSection`; broadcasts always
@@ -96,6 +102,10 @@ Initial public release.
 
 #### Project Settings (`Edit → Project Settings → Plugins → String Table Browser`)
 - `ButtonPlacement` — FText row button placement (Next to Label / Extension Bar).
+  Next to Label covers top-level properties only; Extension Bar covers all depths.
+- `bForceLoadStringTables` — load all string table assets via async streamable
+  manager before building the cache (default true). Ensures complete cache
+  coverage on projects where assets are not kept loaded between sessions.
 - `SearchDebounceDelay` — search filter debounce in seconds (default 0.15).
 - `SaveCacheToDiskDelay` — disk write debounce in seconds (default 1.5).
 
@@ -120,22 +130,6 @@ Initial public release.
 ---
 
 ## Roadmap
-
-### Force-load string table assets
-
-**Goal:** Prevent stale cache and missing entries on projects where string table
-assets are not kept loaded in memory between sessions.
-
-**Approach:** Add an optional setting (on by default) that uses
-`FStreamableManager` or `AssetManager->LoadAsset()` to load all `UStringTable`
-assets during `ForceRebuildCache`, rather than skipping assets not already
-resident via `FindObject`. This trades a one-time load cost at cache build time
-for complete, accurate cache coverage.
-
-**Open question:** Whether the setting should apply only to `ForceRebuildCache`
-or also to incremental `OnAssetAdded` / `OnAssetUpdated` handlers.
-
----
 
 ### CSV string table support
 
