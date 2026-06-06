@@ -119,12 +119,6 @@ void FStringTableBrowserModule::StartupModule()
 			&FTextStringTableBrowserDetailCustomization::OnGeneratePropertyRowExtension
 		);
 
-	// Next-to-label customization — always registered, same internal gate.
-	PropertyModule.RegisterCustomClassLayout(
-		"Object",
-		FOnGetDetailCustomizationInstance::CreateStatic(&FTextStringTableBrowserDetailCustomization::MakeInstance)
-	);
-
 	PropertyModule.NotifyCustomizationModuleChanged();
 	
 	// Register the tab spawner
@@ -165,7 +159,6 @@ void FStringTableBrowserModule::ShutdownModule()
 			FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
 		
 		PropertyModule.GetGlobalRowExtensionDelegate().Remove(GlobalRowExtensionHandle);
-		PropertyModule.UnregisterCustomClassLayout("Object");
 		PropertyModule.NotifyCustomizationModuleChanged();
 	}
 

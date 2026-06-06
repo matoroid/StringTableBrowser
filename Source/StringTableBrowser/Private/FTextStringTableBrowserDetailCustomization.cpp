@@ -28,14 +28,6 @@ void FTextStringTableBrowserDetailCustomization::OnGeneratePropertyRowExtension(
     TArray<FPropertyRowExtensionButton>& OutExtensionButtons
 )
 {
-    // Only active when the setting is ExtensionBar
-    if (UStringTableBrowserSettings::Get()->ButtonPlacement !=
-        EStringTableBrowserButtonPlacement::ExtensionBar
-    )
-    {
-        return;
-    }
-
     if (!InArgs.PropertyHandle.IsValid() || 
     	!InArgs.PropertyHandle->GetProperty() ||
         !InArgs.PropertyHandle->GetProperty()->IsA<FTextProperty>()
@@ -72,107 +64,6 @@ void FTextStringTableBrowserDetailCustomization::OnGeneratePropertyRowExtension(
     );
 	
 	OutExtensionButtons.Insert(MoveTemp(Button), 0);
-}
-
-// -------------------------------------------------------------------------
-// Next-to-label path
-// -------------s------------------------------------------------------------
-
-TSharedRef<IDetailCustomization> FTextStringTableBrowserDetailCustomization::MakeInstance()
-{
-    return MakeShared<FTextStringTableBrowserDetailCustomization>();
-}
-
-void FTextStringTableBrowserDetailCustomization::CustomizeDetails(
-    IDetailLayoutBuilder& DetailBuilder
-)
-{
-    // Only active when the setting is NextToLabel
-    if (UStringTableBrowserSettings::Get()->ButtonPlacement != EStringTableBrowserButtonPlacement::NextToLabel)
-    {
-        return;
-    }
-    
-    TFunction<void(TSharedRef<IPropertyHandle>, IDetailCategoryBuilder&)> ProcessPropertyHandle =
-        [&](TSharedRef<IPropertyHandle> PropertyHandle, IDetailCategoryBuilder& Category)
-	    {
-		    if (!PropertyHandle->GetProperty() || !PropertyHandle->GetProperty()->IsA<FTextProperty>())
-            {
-		        return;
-            }
-
-            UE_LOG(LogStringTableBrowser, Verbose, TEXT("StringTableBrowser: NextToLabel - Property: %s"), *PropertyHandle->GetProperty()->GetName());
-            
-            FText CurrentValue;
-            PropertyHandle->GetValue(CurrentValue);
-
-            // Per-row last search state — shared with the button lambda
-            TSharedPtr<FString> RowLastSearchText =
-                MakeShared<FString>(CurrentValue.ToString());
-
-            TSharedPtr<SWidget> NameWidget;
-            TSharedPtr<SWidget> ValueWidget;
-
-            IDetailPropertyRow& Row = Category.AddProperty(PropertyHandle);
-            Row.GetDefaultWidgets(NameWidget, ValueWidget);
-
-            Row.CustomWidget(/*bShowChildren=*/true)
-            .NameContent()
-            [
-                SNew(SHorizontalBox)
-
-                // Native property label — preserved exactly
-                + SHorizontalBox::Slot().FillWidth(1.0f)
-                [
-                    NameWidget.ToSharedRef()
-                ]
-
-                // Search button to the right of the label
-                + SHorizontalBox::Slot()
-                  .AutoWidth()
-                  .VAlign(VAlign_Center)
-                  .Padding(4.0f, 0.0f, 0.0f, 0.0f)
-                [
-                    SNew(SButton)
-                    .ButtonStyle(FAppStyle::Get(), "SimpleButton")
-                    .ToolTipText(LOCTEXT("SearchBtnTooltip",
-                        "Search all String Tables and bind this FText property "
-                        "to the selected entry as a proper string table reference."))
-                    .ContentPadding(FMargin(2.0f))
-                    .OnClicked_Lambda([PropertyHandle, RowLastSearchText]()
-                    {
-                        FStringTableBrowserHelpers::OpenPickerDropdown(PropertyHandle, RowLastSearchText);
-                        return FReply::Handled();
-                    })
-                    [
-                        SNew(SImage)
-                        .Image(FAppStyle::GetBrush(StringTableBrowserIcons::OpenBrowserSearch))
-                        .DesiredSizeOverride(FVector2D(14.0f, 14.0f))
-                    ]
-                ]
-            ]
-            .ValueContent()
-            .MinDesiredWidth(250.0f)
-            [
-                ValueWidget.ToSharedRef()
-            ];
-	    };
-    
-    TArray<FName> CategoryNames;
-    DetailBuilder.GetCategoryNames(CategoryNames);
-
-    for (const FName& CategoryName : CategoryNames)
-    {
-        IDetailCategoryBuilder& Category = DetailBuilder.EditCategory(CategoryName);
-
-        TArray<TSharedRef<IPropertyHandle>> CategoryProperties;
-        Category.GetDefaultProperties(CategoryProperties);
-
-        for (const TSharedRef<IPropertyHandle>& PropertyHandle : CategoryProperties)
-		{
-			ProcessPropertyHandle(PropertyHandle, Category);
-		}
-    }
 }
 
 #undef LOCTEXT_NAMESPACE

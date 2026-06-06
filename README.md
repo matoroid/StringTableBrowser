@@ -15,8 +15,7 @@ An Unreal Engine editor plugin that lets you browse, search, and bind every stri
 - **Search modes** — plain text, match case, whole word, and full regex support
 - **Sortable columns** — click any column header to sort ascending or descending
 - **Row actions** — three icon buttons per row: open the asset editor, copy a `LOCTABLE()` reference, or open the native Reference Viewer
-- **Details panel integration** — a search icon button appears on every `FText` property row in the Details panel. The Extension Bar mode covers all FText properties including those nested inside structs. The Next to Label mode covers top-level FText properties only.
-- **Configurable button placement** — choose whether the Details panel button appears in the shared extension bar (compatible with MVVM and other plugins) or next to the property label, via Project Settings
+- **Details panel integration** — a search icon button appears on every `FText` property row in the Details panel. The Extension Bar mode covers all FText properties including those nested inside structs. 
 - **Force load string tables** — optional setting (on by default) to load all string table assets via the async streamable manager on cache build, guaranteeing complete cache coverage on projects where assets are not kept in memory
 - **Incremental cache** — the plugin listens to the Asset Registry and updates automatically when string tables are added, removed, or modified
 - **Disk cache** — the entry list is persisted to disk so the panel is populated instantly on editor startup without re-scanning all assets
@@ -166,18 +165,7 @@ Go to **Edit → Project Settings → Plugins → String Table Browser** to conf
 
 ![Plugin Settings](Docs/Screenshots/plugin_settings.png)
 
-### FText Button Placement
-
-Controls where the search button appears on `FText` property rows in the Details panel.
-
-| Option | Struct-nested FText | Description | When to use |
-|---|---|---|---|
-| **Next to Property Label** *(default)* | Top-level only | Button appears inline to the right of the property name label. Cannot follow struct hierarchy without displacing properties. | Simple projects with no conflicting plugins and no struct-nested FText |
-| **Extension Bar** | ✅ All depths | Button appears in the shared right-side extension bar alongside buttons from other plugins. The global row extension delegate fires per-row globally so struct-nested properties are covered automatically. | MVVM or other plugins that add row buttons, or when struct-nested FText support is needed |
-
 The setting is stored in `Config/DefaultStringTableBrowser.ini` and is project-scoped, so it commits to source control and applies to all team members.
-
-> **Struct-nested FText properties:** The Next to Label path injects buttons directly into the Details panel category layout. Recursing into struct children would cause those properties to be promoted to the top level of the category, breaking the visual hierarchy. Extension Bar does not have this limitation — it fires globally for every rendered row regardless of nesting depth.
 
 >**Known Issue:** Using the Extension Bar, on some Blueprint assets the button will be clipped by the column. This is a limitation that can't be fixed on the plugin side due to how the Engine renders the coulmn on the Details Panel. Resizing the column should solve it. The issue doesn't happen if there are 3 or more buttons on the Extension Bar, because this triggers the Dropdown.
 
@@ -204,7 +192,6 @@ Controls the debounce delay for writing the cache to disk after Asset Registry e
 Every `FText` property in the Details panel gets a small search icon button injected into its property row. Coverage depends on the placement mode configured in Plugin Settings:
 
 - **Extension Bar mode** — covers all `FText` properties including those nested inside structs at any depth, since the global row extension delegate fires per-row regardless of nesting.
-- **Next to Label mode** — covers top-level `FText` properties only. Attempting to recurse into struct children causes those properties to be promoted out of the struct hierarchy in the Details panel layout, so this path intentionally limits itself to top-level properties.
 
 ![Details Panel Picker](Docs/Screenshots/picker_demo.gif)
 
@@ -273,9 +260,6 @@ Confirm the plugin is enabled under **Edit → Plugins**. If it was just enabled
 **The search icon button doesn't appear on FText properties.**
 The Details panel customization loads during `PostEngineInit`. If the button is missing, confirm the plugin is enabled and the editor has fully finished loading before inspecting a property. Hot-reloading the plugin mid-session may also require a full editor restart.
 
-**The search icon button doesn't appear on FText properties inside a struct.**
-The Next to Label placement mode only covers top-level FText properties — injecting into struct children would break the Details panel hierarchy. Switch to **Extension Bar** mode in Project Settings to get full coverage of struct-nested FText properties at all nesting depths.
-
 **Clicking Apply shows a missing string table entry error.**
 The string table asset may not be loaded in memory. Enable **Force Load String Tables on Cache Build** in Project Settings and click **Force Load String Table** to ensure all assets are loaded and cached.
 
@@ -289,4 +273,17 @@ Close and reopen any Details panel that was already open when you changed the se
 
 ## License
 
-MIT — do whatever you like with it.
+This plugin is released under the **MIT License**.
+
+In short, you are free to:
+
+- Use this plugin in free or commercial Unreal Engine projects.
+- Modify the source code to suit your needs.
+- Distribute it or include it in your own tools.
+
+The only requirement is that the original copyright notice and license text are included in
+any substantial distributions of the source code.
+
+For the full legal text, please see the [LICENSE](LICENSE) file.
+
+Copyright (c) 2026 Mato Marion.
